@@ -188,7 +188,7 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
 done</code></pre>
 
             <h2 id="zigbee"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>Zigbee</h2>
-            <p>The thermostat is a Zigbee 3.0 router on the Home Automation profile (<code>0x0104</code>), in standard ZCL clusters only: no manufacturer-specific clusters, attributes or commands. Zigbee2MQTT has a <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/zigbee2mqtt/nest-learning-thermostat.mjs" target="_blank" rel="noopener">ready-made converter</a>, which is also a working reference for a converter or quirk elsewhere.</p>
+            <p>The thermostat is a Zigbee 3.0 router on the Home Automation profile (<code>0x0104</code>), in standard ZCL clusters, plus one manufacturer-specific cluster, <a href="#zigbee-weather">Weather</a>, for what Zigbee has no standard for. Zigbee2MQTT has a <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/zigbee2mqtt/nest-learning-thermostat.mjs" target="_blank" rel="noopener">ready-made converter</a>, which is also a working reference for a converter or quirk elsewhere.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Network</th><th>Value</th></tr></thead>
@@ -196,7 +196,7 @@ done</code></pre>
                         <tr><td data-label="Network">Joining</td><td data-label="Value">Active scan of channels 11–26; joins, as a router, the network permitting joins with the best link quality (Zigbee PRO stack profile only).</td></tr>
                         <tr><td data-label="Network">Security</td><td data-label="Value">The Zigbee 3.0 global key (<code>ZigBeeAlliance09</code>) bootstraps joining. The thermostat obtains the encrypted network key and requests an individual trust-centre link key for authenticated router notifications. No install code.</td></tr>
                         <tr><td data-label="Network">Rejoin</td><td data-label="Value">The network is kept on the unit and in the radio: restarts don't need pairing again.</td></tr>
-                        <tr><td data-label="Network">ZDO manufacturer code</td><td data-label="Value"><code>0x10D6</code> (Nest Labs)</td></tr>
+                        <tr><td data-label="Network">Manufacturer code</td><td data-label="Value"><code>0x10D6</code> (Nest Labs): the ZDO node descriptor's, and the code in the Weather cluster's frames</td></tr>
                         <tr><td data-label="Network">Basic: ManufacturerName</td><td data-label="Value"><code>Google Nest</code></td></tr>
                         <tr><td data-label="Network">Basic: ModelIdentifier</td><td data-label="Value">2nd generation: <code>Nest Learning Thermostat (gen2)</code>; 3rd generation: <code>Nest Learning Thermostat</code></td></tr>
                         <tr><td data-label="Network">Basic: HWVersion</td><td data-label="Value"><code>2</code> or <code>3</code>, matching the thermostat generation</td></tr>
@@ -209,7 +209,9 @@ done</code></pre>
             <p>The thermostat reports every change, and everything every 10 minutes (the first 10 s after joining), to the coordinator (<code>0x0000</code>), endpoint 1. It does so whatever bindings and reporting configuration exist: Configure Reporting is accepted and changes nothing. Bind and configure reporting anyway if your stack expects it; the converter does.</p>
             <p>Reported attributes: Thermostat <code>0x0000</code>–<code>0x0002</code>, <code>0x0011</code>–<code>0x0014</code>, <code>0x001B</code>, <code>0x001C</code>, <code>0x0025</code>, <code>0x0029</code>; Power Configuration <code>0x0020</code>; <code>0x0000</code> of Fan Control, Thermostat UI Configuration, Relative Humidity, Temperature Measurement and On/Off; PresentValue (<code>0x0055</code>) of Analog Output, Analog Input and Binary Input.</p>
             <h3>Commands</h3>
-            <p>Read Attributes, Write Attributes (with and without response), Configure Reporting and Discover Attributes are answered. A write is a command (see <a href="#mqtt-commands">MQTT commands</a>, with the same ranges): out of range gives <code>INVALID_VALUE</code>, read-only <code>READ_ONLY</code>. A read of an attribute with no value yet gives ZCL's "none" for its type (<code>0x8000</code> for temperatures, <code>0xFFFF</code> for humidity, <code>0xFF</code> for battery voltage).</p>
+            <p>Read Attributes, Write Attributes (with and without response), Configure Reporting and Discover Attributes are answered. A write is a command (see <a href="#mqtt-commands">MQTT commands</a>, with the same ranges): out of range gives <code>INVALID_VALUE</code>, read-only <code>READ_ONLY</code>. A read of an attribute with no value yet gives ZCL's "none" for its type (<code>0x8000</code> for temperatures, <code>0xFFFF</code> for humidity, <code>0xFF</code> for battery voltage). Manufacturer-specific frames are served for the Weather cluster with Nest Labs' code; any other gets <code>UNSUP_MANUF_*_COMMAND</code>.</p>
+            <h3>Time</h3>
+            <p>Endpoint 1 is a Time cluster (<code>0x000A</code>) client: 10 s after joining, then every 6 hours, the thermostat reads <code>Time</code> (<code>0x0000</code>, UTCTime) from the coordinator's endpoint 1 and sets its clock from it when the two differ by more than 2 s; a read that brings no time is retried every minute. Zigbee2MQTT and ZHA answer it by themselves. An answer is trusted only within 5 s of the request.</p>
 
             <h2 id="zigbee-endpoints"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>Zigbee endpoints</h2>
             <p>Each endpoint has a fixed number, present when the unit's equipment, as of nestlocal's start, calls for it.</p>
@@ -217,7 +219,7 @@ done</code></pre>
                 <table>
                     <thead><tr><th>Endpoint</th><th>Device type</th><th>Server clusters</th><th>What</th></tr></thead>
                     <tbody>
-                        <tr><td data-label="Endpoint">1</td><td data-label="Device type">Thermostat <code>0x0301</code></td><td data-label="Server clusters">Basic, Power Configuration, Identify, Thermostat, Thermostat UI Configuration, Relative Humidity, Fan Control (with a fan)</td><td data-label="What">The thermostat</td></tr>
+                        <tr><td data-label="Endpoint">1</td><td data-label="Device type">Thermostat <code>0x0301</code></td><td data-label="Server clusters">Basic, Power Configuration, Identify, Thermostat, Thermostat UI Configuration, Relative Humidity, Weather (<code>0xFC00</code>), Fan Control (with a fan). Client: Time</td><td data-label="What">The thermostat</td></tr>
                         <tr><td data-label="Endpoint">2</td><td data-label="Device type">Temperature Sensor <code>0x0302</code></td><td data-label="Server clusters">Temperature Measurement</td><td data-label="What">Backplate temperature</td></tr>
                         <tr><td data-label="Endpoint">3</td><td data-label="Device type">Level Controllable Output <code>0x0003</code></td><td data-label="Server clusters">Analog Output</td><td data-label="What">Fan timer duration, minutes, 15–1440 (with a fan)</td></tr>
                         <tr><td data-label="Endpoint">4</td><td data-label="Device type">Level Controllable Output <code>0x0003</code></td><td data-label="Server clusters">Analog Output</td><td data-label="What">Target humidity, %, 10–60 (with a humidifier or dehumidifier)</td></tr>
@@ -248,7 +250,7 @@ done</code></pre>
                     <thead><tr><th>Attribute</th><th>Type</th><th>Access</th><th>Meaning</th></tr></thead>
                     <tbody>
                         <tr><td data-label="Attribute"><code>0x0000</code> LocalTemperature</td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">Room temperature</td></tr>
-                        <tr><td data-label="Attribute"><code>0x0001</code> OutdoorTemperature</td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">The last <code>set/outdoor_temperature</code> over MQTT</td></tr>
+                        <tr><td data-label="Attribute"><code>0x0001</code> OutdoorTemperature</td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">The last <code>set/outdoor_temperature</code> over MQTT, or the Weather cluster's</td></tr>
                         <tr><td data-label="Attribute"><code>0x0002</code> Occupancy</td><td data-label="Type">map8</td><td data-label="Access">read</td><td data-label="Meaning">Bit 0 clear when Home/Away Assist says away</td></tr>
                         <tr><td data-label="Attribute"><code>0x0003</code>–<code>0x0006</code>, <code>0x0015</code>–<code>0x0018</code></td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">Setpoint limits: 900 (9 °C) and 3200 (32 °C)</td></tr>
                         <tr><td data-label="Attribute"><code>0x0011</code> OccupiedCoolingSetpoint</td><td data-label="Type">int16</td><td data-label="Access">read, write</td><td data-label="Meaning"><code>target_high</code> in auto, else <code>target</code></td></tr>
@@ -281,6 +283,24 @@ done</code></pre>
                         <tr><td data-label="Cluster">Analog Input <code>0x000C</code></td><td data-label="Attribute"><code>0x0055</code> PresentValue, single</td><td data-label="Meaning">Value. EngineeringUnits 73 seconds, 71 hours.</td></tr>
                         <tr><td data-label="Cluster">Binary Input <code>0x000F</code></td><td data-label="Attribute"><code>0x0055</code> PresentValue, bool</td><td data-label="Meaning">The state. Description <code>0x001C</code> is its MQTT state field name.</td></tr>
                         <tr><td data-label="Cluster">On/Off <code>0x0006</code></td><td data-label="Attribute"><code>0x0000</code> OnOff, bool</td><td data-label="Meaning">The setting. Commands Off <code>0x00</code>, On <code>0x01</code>, Toggle <code>0x02</code>.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="zigbee-weather">Weather cluster (<code>0xFC00</code>, manufacturer-specific), endpoint 1</h3>
+            <p>What the thermostat used to get from Google: MQTT's <code>set/outdoor_temperature</code>, <code>set/outdoor_humidity</code> and <code>set/weather</code> as attributes, all read/write, written by the coordinator with manufacturer code <code>0x10D6</code> in the frame and kept until written again. Each kind of value has one "none": <code>0x8000</code> for an int16, <code>0xFF</code> for a uint8, <code>0xFFFFFFFF</code> for a UTCTime (seconds since 2000-01-01 UTC). The forecast is in slots, hour <i>hh</i> (0–23) at <code>0x1hhf</code> and day <i>dd</i> (0–5) at <code>0x2ddf</code>, <i>f</i> the field; a slot whose time is none is left out of the forecast, so write every slot. A frame holds about 12 attributes (4 hours, or 3 days); Zigbee2MQTT's converter does the splitting, from the <a href="/integrations/#zigbee">weather blueprint for Zigbee</a>.</p>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>Attribute</th><th>Type</th><th>Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td data-label="Attribute"><code>0x0000</code></td><td data-label="Type">int16</td><td data-label="Meaning">Outdoor temperature, 0.01 °C, −60 to 60 °C; also Thermostat's OutdoorTemperature</td></tr>
+                        <tr><td data-label="Attribute"><code>0x0001</code></td><td data-label="Type">uint8</td><td data-label="Meaning">Outdoor humidity, %</td></tr>
+                        <tr><td data-label="Attribute"><code>0x0002</code></td><td data-label="Type">string</td><td data-label="Meaning">Condition, Home Assistant's name (<code>sunny</code>, <code>partlycloudy</code>, <code>rainy</code>, …), for the screen's image</td></tr>
+                        <tr><td data-label="Attribute"><code>0x0003</code>, <code>0x0004</code></td><td data-label="Type">UTCTime</td><td data-label="Meaning">Next sunrise and sunset, as <code>sun.sun</code>'s <code>next_rising</code> and <code>next_setting</code></td></tr>
+                        <tr><td data-label="Attribute"><code>0x1hh0</code>, <code>0x2dd0</code></td><td data-label="Type">UTCTime</td><td data-label="Meaning">The hour's time; the day's date</td></tr>
+                        <tr><td data-label="Attribute"><code>0x1hh1</code>, <code>0x2dd1</code></td><td data-label="Type">int16</td><td data-label="Meaning">The hour's temperature; the day's high</td></tr>
+                        <tr><td data-label="Attribute"><code>0x1hh2</code>, <code>0x2dd2</code></td><td data-label="Type">uint8</td><td data-label="Meaning">Humidity, %</td></tr>
+                        <tr><td data-label="Attribute"><code>0x2dd3</code></td><td data-label="Type">int16</td><td data-label="Meaning">The day's low</td></tr>
                     </tbody>
                 </table>
             </div>
