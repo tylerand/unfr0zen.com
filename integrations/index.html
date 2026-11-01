@@ -110,6 +110,7 @@
                 </table>
             </div>
             <p>The thermostat joins your Zigbee network as a router through its own 802.15.4 radio, alone or beside MQTT and Matter. On first start nestlocal writes its own radio firmware in place of Nest's Thread firmware (Heat Link). Installing again without Zigbee puts Nest's firmware back. Both generations use Nest's -15 dBm Zigbee transmit setting.</p>
+            <p>A European 3rd generation unit with a Heat Link (Display-3.x and Display-5.x) and nothing on W1 shows error H71 once the Heat Link can no longer connect. With Zigbee or Thread, nestlocal sets the unit up as heating a Works with Nest boiler, so it keeps heating and its safety temperature, and Zigbee, Matter and MQTT offer heat. Its Equipment and Pro Setup settings then show the boiler's pages, and Safety Temp is no longer editable on the thermostat. Installing again without them takes the setting back. A unit wired to its Heat Link on W1 is left as it is.</p>
             <p>Any Zigbee 3.0 coordinator works: the thermostat is controlled through standard clusters, so ZHA needs no converter or quirk. Zigbee2MQTT is recommended, with the converter that names every entity and carries the weather:</p>
             <ol>
                 <li>Zigbee2MQTT 2.12.1 or later: copy <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/zigbee2mqtt/nest-learning-thermostat.mjs" target="_blank" rel="noopener"><code>nest-learning-thermostat.mjs</code></a> to <code>data/external_converters/</code> and restart Zigbee2MQTT.</li>
