@@ -117,6 +117,7 @@
                 <li>After updating the converter, re-interview the device to refresh its generation-specific model, then Reconfigure it so Home Assistant gets the new entities.</li>
             </ol>
             <p>With the converter, Home Assistant gets the MQTT entities under the same names, except the IP address, Wi-Fi signal and the blueprints.</p>
+            <p>A router needs its own trust-centre link key to help other devices join a coordinator that uses per-device keys. If it still has only the global joining key, enable pairing again on that thermostat to obtain its individual key.</p>
             <p>To move to another network, open <b>UNFR0ZEN → Zigbee → Enable pairing</b> and confirm. The thermostat beeps, leaves the network, forgets its credentials and looks for one permitting joins for 30 seconds. After a timeout it stays off any network until pairing is enabled again or nestlocal restarts.</p>
             <p>The radio keeps routing while the thermostat sleeps, and its interrupt wakes the unit for a message. The radio-wake module supports the 2nd generation's kernel and the published 3rd-generation kernels (5.8 to 6.1). Without a matching module, messages wait until the unit wakes for something else. The 2nd generation's native client prevents sleep while a USB cable is connected.</p>
 

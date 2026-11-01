@@ -194,8 +194,9 @@ done</code></pre>
                     <thead><tr><th>Network</th><th>Value</th></tr></thead>
                     <tbody>
                         <tr><td data-label="Network">Joining</td><td data-label="Value">Active scan of channels 11–26; joins, as a router, the network permitting joins with the best link quality (Zigbee PRO stack profile only).</td></tr>
-                        <tr><td data-label="Network">Security</td><td data-label="Value">The Zigbee 3.0 global trust centre link key (<code>ZigBeeAlliance09</code>); the network key comes from the trust centre. No install code.</td></tr>
+                        <tr><td data-label="Network">Security</td><td data-label="Value">The Zigbee 3.0 global key (<code>ZigBeeAlliance09</code>) bootstraps joining. The thermostat obtains the encrypted network key and requests an individual trust-centre link key for authenticated router notifications. No install code.</td></tr>
                         <tr><td data-label="Network">Rejoin</td><td data-label="Value">The network is kept on the unit and in the radio: restarts don't need pairing again.</td></tr>
+                        <tr><td data-label="Network">ZDO manufacturer code</td><td data-label="Value"><code>0x10D6</code> (Nest Labs)</td></tr>
                         <tr><td data-label="Network">Basic: ManufacturerName</td><td data-label="Value"><code>Google Nest</code></td></tr>
                         <tr><td data-label="Network">Basic: ModelIdentifier</td><td data-label="Value">2nd generation: <code>Nest Learning Thermostat (gen2)</code>; 3rd generation: <code>Nest Learning Thermostat</code></td></tr>
                         <tr><td data-label="Network">Basic: HWVersion</td><td data-label="Value"><code>2</code> or <code>3</code>, matching the thermostat generation</td></tr>
