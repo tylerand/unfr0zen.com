@@ -88,6 +88,7 @@
             <pre><code>sudo tee /etc/udev/rules.d/70-unfr0zen.rules > /dev/null &lt;&lt;'EOF'
 # i.MX ROM serial download, recovery U-Boot
 ATTRS{idVendor}=="15a2", ATTRS{idProduct}=="0071", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="15a2", ATTRS{idProduct}=="007d", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
 ATTRS{idVendor}=="18d1", ATTRS{idProduct}=="4ee0", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
 # unfr0zen initramfs shell and the Nest application's console
 ATTRS{idVendor}=="0525", ATTRS{idProduct}=="a4a7", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
