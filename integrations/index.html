@@ -34,6 +34,7 @@
         <div class="wrap">
             <h1>Integrations</h1>
             <p>Integrations are chosen when you install. Tick them in the app, or pass them as options to the <code>unfr0zen</code> command-line tool: on Linux and macOS, the app's own executable run with arguments. Windows has the app only. To add or remove one later, run the install again with the new selection. MQTT, Matter, Zigbee and Doom are served by nestlocal, which any of them installs on the thermostat.</p>
+            <p>On Linux, run both the app and CLI as your normal user, without <code>sudo</code>. Both use the same <a href="https://github.com/unfr0zen/unfr0zen#install" target="_blank" rel="noopener">one-time USB permission setup</a>, which requires an administrator; neither frontend requests elevated privileges. Both save run logs under <code>~/.local/share/unfr0zen/logs/</code>, or <code>$XDG_DATA_HOME/unfr0zen/logs/</code> when set.</p>
             <p>MQTT and Matter reach your network over Wi-Fi: join it from the thermostat's own menu (Settings → Network). That network doesn't need internet access.</p>
             <p>To build your own integration, the MQTT topics, Zigbee clusters and Matter endpoints are documented under <a href="/protocols/">Protocols</a>.</p>
             <ul class="toc">
