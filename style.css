@@ -154,16 +154,23 @@ nav a.active {
     min-height: max(60vh, 560px);
     display: flex;
     align-items: center;
-    padding: 48px 0;
+    padding: 48px 0 16px;
 }
 
 .hero .wrap {
-    display: flex;
-    align-items: center;
-    gap: 48px;
+    width: 100%;
 }
 
-.hero-text { flex: 1; }
+/* The words and the title at the left, what to do next at the right, so the
+   screenshot under them starts high on the page. */
+
+.hero-text {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 48px;
+}
+
+.hero-text > * { grid-column: 1; }
 
 .hero-title {
     display: flex;
@@ -171,10 +178,36 @@ nav a.active {
     gap: 12px;
 }
 
-.hero-title img {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
+.hero-logo {
+    position: relative;
+    flex: none;
+    width: 96px;
+    height: 96px;
+    border-radius: 21px;
+    overflow: hidden;
+    box-shadow: 0 -8px 32px 0 rgba(150, 210, 255, 0.45);
+}
+
+.hero-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* A glint across the icon, then a rest. */
+
+.hero-logo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 20%, rgba(179, 233, 255, 0.16) 50%, transparent 80%);
+    transform: translateX(-100%);
+    animation: glint 8s ease-in-out 0.5s infinite;
+}
+
+@keyframes glint {
+    0% { transform: translateX(-100%); }
+    15%, 100% { transform: translateX(100%); }
 }
 
 .hero-title h1 {
@@ -183,6 +216,8 @@ nav a.active {
     font-weight: 600;
     letter-spacing: -0.025em;
 }
+
+.hero-title .zero { color: var(--ice-dim); }
 
 .hero h2 {
     font-size: 2.5rem;
@@ -205,26 +240,99 @@ nav a.active {
     display: flex;
     flex-wrap: wrap;
     gap: 13px;
-    margin-top: 40px;
+}
+
+.hero-text > .buttons {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: end;
 }
 
 .quicklinks {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 36px;
+}
+
+.hero-text > .quicklinks {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 14px;
 }
 
 /* App screenshot, a transparent PNG with the macOS window shadow */
 
+.shots {
+    position: relative;
+    max-width: 1192px;
+    margin-top: 16px;
+}
+
 .screenshot {
-    flex: none;
-    width: 460px;
+    display: block;
+    width: 100%;
     height: auto;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.screenshot.is-shown { opacity: 1; }
+
+.screenshot:not(:first-child) {
+    position: absolute;
+    inset: 0;
+}
+
+/* The arrows sit in the transparent margin beside the window, clear of what
+   it shows; that margin is 40px wide at the narrowest the screenshots appear. */
+
+.shot-nav {
+    position: absolute;
+    top: 48%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    color: var(--text);
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0.7;
+    transform: translateY(-50%);
+    transition: opacity 0.15s;
+}
+
+.shot-nav[hidden] { display: none; }
+
+.shot-nav:hover, .shot-nav:focus-visible { opacity: 1; }
+
+.shot-prev { left: 0; }
+
+.shot-next { right: 0; }
+
+.shot-nav svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .screenshot { transition: none; }
+    .hero-logo::after { animation: none; }
 }
 
 @media (max-width: 900px) {
-    .screenshot { display: none; }
+    .shots { display: none; }
+    .hero-text { display: block; }
+    .hero-text > .buttons { margin-top: 40px; }
+    .hero-text > .quicklinks { margin-top: 36px; }
     .hero { min-height: 0; }
     .hero h2 { font-size: 1.6rem; }
 }

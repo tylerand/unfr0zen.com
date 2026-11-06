@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://rsms.me">
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <link rel="stylesheet" href="/style.css">
+    <script defer src="/carousel.js"></script>
     <script async src="https://analytics.unfr0zen.com/js/pa-abmtJ6LBGT69nUpVKESXi.js"></script>
     <script>
       window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
@@ -40,8 +41,8 @@
         <div class="wrap">
             <div class="hero-text">
                 <div class="hero-title">
-                    <img src="/assets/logo.png" alt="">
-                    <h1>unfr0zen</h1>
+                    <span class="hero-logo"><img src="/assets/logo.png" alt=""></span>
+                    <h1>unfr<span class="zero">0</span>zen</h1>
                 </div>
                 <h2>Free your Nest Learning Thermostat from Google's cloud</h2>
                 <p>Local MQTT, Matter and Zigbee for Home Assistant. Installed over USB, no Google account, keeps working when the internet is down.</p>
@@ -55,7 +56,13 @@
                     <a class="link" href="#devices">→ Supported thermostats</a>
                 </div>
             </div>
-            <img class="screenshot" src="/assets/app.png" width="552" height="732" alt="The unfr0zen app on macOS">
+            <div class="shots" role="group" aria-roledescription="carousel" aria-label="The unfr0zen app on macOS">
+                <img class="screenshot is-shown" src="/assets/app1.png" width="1192" height="792" alt="The Patch page: options for blocking Nest and Google servers, NTP, MQTT, Matter, Zigbee, SSH and the USB root shell.">
+                <img class="screenshot" src="/assets/app2.png" width="1192" height="792" aria-hidden="true" alt="The Backups page: NAND backups of different thermostats, with a map of the selected backup's NAND.">
+                <img class="screenshot" src="/assets/app3.png" width="1192" height="792" aria-hidden="true" alt="The Logs page: past runs, with the steps and log of the selected one.">
+                <button class="shot-nav shot-prev" type="button" aria-label="Previous screenshot" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+                <button class="shot-nav shot-next" type="button" aria-label="Next screenshot" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
         </div>
     </div>
 
@@ -108,17 +115,17 @@
             <div class="table-scroll">
                 <table>
                     <thead>
-                        <tr><th>Thermostat</th><th>SoC</th><th>MQTT</th><th>Matter</th><th>Zigbee</th></tr>
+                        <tr><th>Device</th><th>Codename</th><th>MQTT</th><th>Matter (Wi-Fi)</th><th>Matter (Thread)</th><th>Zigbee</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>Nest Learning Thermostat, 3rd gen</td><td>i.MX6 SoloX</td><td>✓</td><td>✓</td><td>✓</td></tr>
-                        <tr><td>Nest Learning Thermostat, 2nd gen</td><td>TI AM3703</td><td>✓</td><td>✓</td><td>✓</td></tr>
-                        <tr><td>Nest Learning Thermostat, 1st gen (Diamond)</td><td>TI AM3703</td><td>Unverified</td><td>Unverified</td><td>Unavailable</td></tr>
+                        <tr><td>Nest Learning Thermostat (3rd generation)</td><td><code>diamond3</code></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                        <tr><td>Nest Learning Thermostat (2nd generation)</td><td><code>j49</code></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                        <tr><td>Nest Learning Thermostat (1st generation)</td><td><code>diamond</code></td><td>🧪</td><td>🧪</td><td>—</td><td>—</td></tr>
                     </tbody>
                 </table>
             </div>
-            <div class="note">3rd gen patching relies on a specific silicon revision of the i.MX6 SoloX. Units ship with different revisions, so for now not every 3rd gen thermostat is guaranteed to be compatible. The app shows the unit's revision once it connects.</div>
-            <p>1st gen support is experimental: the Diamond USB loader and NAND path are implemented, but no stock Gen 1 NAND or physical unit has been tested. Its UART radio is not supported for Zigbee or Matter over Thread.</p>
+            <p>✅ tested on a unit · 🧪 built, not yet tested on a unit · — not available</p>
+            <p>MQTT, Matter and Zigbee are nestlocal's: choosing any of them installs it on the thermostat. With MQTT or Matter, the thermostat reaches the broker or the controller over Wi-Fi, joined from its own menu (Settings → Network); the network doesn't need internet access.</p>
         </div>
     </section>
 </main>
