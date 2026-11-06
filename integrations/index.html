@@ -53,7 +53,7 @@
             </ul>
 
             <h2 id="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>UNFR0ZEN menu</h2>
-            <p>The install replaces the thermostat's <b>NEST APP</b> settings entry with <b>UNFR0ZEN</b>. It shows the Matter QR and pairing code with <b>Enable pairing</b>, Zigbee pairing with a 30-second countdown, and Doom. An integration's entry appears only when it was installed.</p>
+            <p>The install replaces the thermostat's <b>NEST APP</b> settings entry with <b>UNFR0ZEN</b>. It shows Matter pairing, Zigbee pairing with a 30-second countdown, and Doom. An integration's entry appears only when it was installed.</p>
             <p>The original <code>nlclient</code> is saved once on the unit, at <code>/etc/unfr0zen/nlclient.original</code>, and kept across later installs. No prebuilt binary patches are used: the app links the menu into the unit's own <code>nlclient</code>. Supported versions and undo: <a href="https://github.com/unfr0zen/unfr0zen/blob/main/platform/common/nlclient/README.md" target="_blank" rel="noopener">platform/common/nlclient/README.md</a>.</p>
 
             <h2 id="mqtt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>MQTT</h2>
@@ -84,7 +84,7 @@
                     </tbody>
                 </table>
             </div>
-            <p>Works alone or beside MQTT. The thermostat must already be on Wi-Fi. It is commissioned with its 11-digit pairing code, <code>0347-100-5534</code> unless you set another. A code of your own needs a valid check digit, and <code>--matter-code</code> turns on Matter. The first pairing window opens by itself; after that, open <b>UNFR0ZEN → Matter → Enable pairing</b>. To move the thermostat to another controller, enable pairing and add it there: once the new controller has added it, the previous one is removed.</p>
+            <p>Works alone or beside MQTT. The thermostat must already be on Wi-Fi. It is commissioned with its 11-digit pairing code, <code>0347-100-5534</code> unless you set another. A code of your own needs a valid check digit, and <code>--matter-code</code> turns on Matter. The first pairing window opens by itself: <b>UNFR0ZEN → Matter</b> shows <b>Ready to pair</b> with the QR and pairing code. When pairing completes, the screen automatically replaces the codes with <b>Paired</b> and <b>Enable pairing</b>. To pair again, choose <b>Enable pairing → Forget and pair</b>. The confirmation warns that this immediately forgets all Matter controllers before opening a new pairing window. This cannot be undone, even if the new pairing fails; Wi-Fi and Zigbee settings are retained. Choose <b>Back</b> to cancel without changing the current pairing.</p>
             <ol>
                 <li>Home Assistant: Settings → Devices &amp; services → Add integration → Matter.</li>
                 <li>Add the device with the pairing code, or scan the QR shown on the thermostat.</li>
