@@ -37,7 +37,7 @@
         <div class="wrap">
             <h1>Protocols</h1>
             <p>What nestlocal, the service unfr0zen installs on the thermostat, speaks on MQTT, Zigbee and Matter: enough to write an integration for any home automation system. To set the integrations up with Home Assistant, see <a href="/integrations/">Integrations</a>.</p>
-            <p>All three protocols read the same state and run the same commands. A command changes the unit's settings; the state then shows what the unit did, not what was asked. A setpoint the unit adjusts or refuses comes back as the unit has it.</p>
+            <p>All three protocols read the same state and run the same commands, though <code>raw/</code>, <code>eco_mode</code>, <code>fan_timer_end</code>, <code>rssi</code>, <code>local_ip</code>, <code>hot_water_boiling_state</code> and <code>heatpump_ready</code> are MQTT's alone. A command changes the unit's settings; the state then shows what the unit did, not what was asked. A setpoint the unit adjusts or refuses comes back as the unit has it.</p>
             <ul class="toc">
                 <li><a href="#conventions">Conventions</a></li>
                 <li><a href="#mqtt">MQTT</a></li>
@@ -54,7 +54,7 @@
                 <li><b>Temperatures are °C</b> on every protocol, whatever the unit displays. MQTT carries degrees; Zigbee and Matter carry hundredths of a degree (<code>2150</code> is 21.5 °C).</li>
                 <li><b>Temperatures read as the display shows them</b>: to 0.5 °C, or, when the unit displays °F, to the whole °F converted back to °C. The <code>raw/</code> MQTT topics keep the unit's exact values.</li>
                 <li><b>Setpoints written are rounded to 0.5 °C.</b> The unit keeps a range's low and high at least 1.5 °C apart.</li>
-                <li><b>The equipment decides what is offered.</b> Cooling, the fan, an air filter, a humidifier and so on appear only when the unit's wiring has them (<code>can_heat</code>, <code>can_cool</code>, <code>has_fan</code>, <code>has_air_filter</code>, <code>has_humidifier</code>, <code>has_dehumidifier</code>, <code>has_hot_water_control</code>). A Heat Link unit that unfr0zen sets up as heating a Works With Nest boiler (with Zigbee or Thread) offers heat with nothing on W1, though the unit's <code>can_heat</code> in <code>raw/shared</code> stays false.</li>
+                <li><b>The equipment decides what is offered.</b> Cooling, the fan, an air filter, a humidifier and so on appear only when the unit's wiring has them (<code>can_heat</code>, <code>can_cool</code>, <code>has_fan</code>, <code>has_air_filter</code>, <code>has_humidifier</code>, <code>has_dehumidifier</code>, <code>has_hot_water_control</code>). A Heat Link model installed with the Works With Nest boiler option (which needs Zigbee or Thread) offers heat with nothing on W1, though the unit's <code>can_heat</code> in <code>raw/shared</code> stays false.</li>
                 <li><b>Nothing is offered before the unit has reported</b> its settings to nestlocal, a few seconds after it starts.</li>
                 <li>The <b>serial</b> is the unit's serial number, which is also its hostname.</li>
             </ul>
@@ -93,11 +93,11 @@
 mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</code></pre>
 
             <h3>Home Assistant discovery</h3>
-            <p>nestlocal publishes retained discovery configs to <code>homeassistant/&lt;component&gt;/nestlocal_&lt;serial in lowercase&gt;/&lt;key&gt;/config</code>, again when the equipment changes and whenever <code>online</code> arrives on <code>homeassistant/status</code>. An entity the equipment no longer offers gets an empty retained payload. Every config reads <code>state</code> and names its <code>availability</code> topic, so a system that isn't Home Assistant can ignore discovery and use the topics above.</p>
-            <p>Components: one <code>climate</code> (key <code>thermostat</code>), and <code>sensor</code>, <code>binary_sensor</code>, <code>switch</code>, <code>number</code>, <code>select</code> and <code>button</code> entities whose key is the state field they read or the command they send.</p>
+            <p>nestlocal publishes retained discovery configs to <code>homeassistant/&lt;component&gt;/nestlocal_&lt;serial in lowercase&gt;/&lt;key&gt;/config</code> on each connection, again when a config changes (equipment, firmware version, °C/°F) and whenever <code>online</code> arrives on <code>homeassistant/status</code>. An entity the equipment stops offering during a connection gets an empty retained payload. Every config reads <code>state</code> and names its <code>availability</code> topic, so a system that isn't Home Assistant can ignore discovery and use the topics above.</p>
+            <p>Components: one <code>climate</code> (key <code>thermostat</code>), and <code>sensor</code>, <code>binary_sensor</code>, <code>switch</code>, <code>number</code>, <code>select</code> and <code>button</code> entities whose key is the state field they read or the command they send (<code>sensor</code> <code>hvac_action</code> reads <code>action</code>).</p>
 
             <h2 id="mqtt-commands"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>MQTT commands</h2>
-            <p>Publish to <code>nestlocal/&lt;serial&gt;/set/&lt;command&gt;</code>. The payload is plain text, surrounding whitespace ignored; on/off takes <code>ON</code>, <code>OFF</code>, <code>true</code>, <code>false</code>, <code>1</code> or <code>0</code>, in any case. A payload out of range or unknown is logged on the unit and ignored: there is no error topic. Watch <code>state</code> for the result. Don't retain commands, <code>set/weather</code> aside: nestlocal gets every retained one again each time it connects.</p>
+            <p>Publish to <code>nestlocal/&lt;serial&gt;/set/&lt;command&gt;</code>. The payload is plain text, surrounding whitespace ignored; on/off takes <code>ON</code>, <code>OFF</code>, <code>true</code>, <code>false</code>, <code>1</code> or <code>0</code>, in any case; other words are case-sensitive. A payload out of range or unknown, or a command for a bucket the unit hasn't reported, is logged on the unit and ignored: there is no error topic. Watch <code>state</code> for the result. Don't retain commands, <code>set/weather</code> aside: nestlocal gets every retained one again each time it connects.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Command</th><th>Payload</th><th>Effect</th></tr></thead>
@@ -105,9 +105,9 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
                         <tr><td data-label="Command"><code>mode</code></td><td data-label="Payload"><code>off</code> <code>heat</code> <code>cool</code> <code>heat_cool</code></td><td data-label="Effect">System mode. <code>heat_cool</code> is the unit's range mode.</td></tr>
                         <tr><td data-label="Command"><code>target</code></td><td data-label="Payload">°C, 4.5–35</td><td data-label="Effect">The setpoint in <code>heat</code> or <code>cool</code>.</td></tr>
                         <tr><td data-label="Command"><code>target_low</code>, <code>target_high</code></td><td data-label="Payload">°C, 4.5–35</td><td data-label="Effect">The range's setpoints in <code>heat_cool</code>.</td></tr>
-                        <tr><td data-label="Command"><code>preset</code></td><td data-label="Payload"><code>eco</code> <code>none</code></td><td data-label="Effect">Eco on, or back to the schedule.</td></tr>
+                        <tr><td data-label="Command"><code>preset</code></td><td data-label="Payload"><code>eco</code> <code>none</code> (or empty)</td><td data-label="Effect">Eco on, or back to the schedule.</td></tr>
                         <tr><td data-label="Command"><code>fan_mode</code></td><td data-label="Payload"><code>on</code> <code>auto</code></td><td data-label="Effect"><code>on</code> runs the fan for the fan timer duration (15 min if unset); <code>auto</code> stops the timer.</td></tr>
-                        <tr><td data-label="Command"><code>fan_timer_duration</code></td><td data-label="Payload">minutes, 15–1440</td><td data-label="Effect">How long <code>fan_mode on</code> runs the fan.</td></tr>
+                        <tr><td data-label="Command"><code>fan_timer_duration</code></td><td data-label="Payload">whole minutes, 15–1440</td><td data-label="Effect">How long <code>fan_mode on</code> runs the fan.</td></tr>
                         <tr><td data-label="Command"><code>away_temperature_low</code></td><td data-label="Payload">°C, 4.5–21</td><td data-label="Effect">Eco heating temperature.</td></tr>
                         <tr><td data-label="Command"><code>away_temperature_high</code></td><td data-label="Payload">°C, 24–32</td><td data-label="Effect">Eco cooling temperature.</td></tr>
                         <tr><td data-label="Command"><code>away_temperature_low_enabled</code>, <code>away_temperature_high_enabled</code></td><td data-label="Payload">on/off</td><td data-label="Effect">Whether eco heats, or cools, at all.</td></tr>
@@ -127,10 +127,10 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
                     </tbody>
                 </table>
             </div>
-            <div class="note"><code>raw/</code> writes go to the unit unchecked, with Nest's own field names: read the matching <code>raw/&lt;bucket&gt;</code> topic first. Only buckets the unit has already reported can be written.</div>
+            <div class="note"><code>raw/</code> writes go to the unit unchecked, with Nest's own field names: read the matching <code>raw/&lt;bucket&gt;</code> topic first. Only the unit's own buckets (<code>&lt;bucket&gt;.&lt;serial&gt;</code>) already reported can be written; <code>structure</code> is keyed by its own id, so <code>set/raw/structure</code> is refused.</div>
 
             <h2 id="mqtt-state"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>MQTT state</h2>
-            <p>The <code>state</code> topic's JSON. A field the unit hasn't reported is <code>null</code>.</p>
+            <p>The <code>state</code> topic's JSON. A number or string the unit hasn't reported is <code>null</code>, and a bool <code>false</code> (<code>occupancy</code> <code>true</code>). <code>mode</code> and <code>action</code> read <code>off</code>, <code>fan_mode</code> <code>auto</code>, <code>preset</code> <code>none</code>.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
@@ -140,13 +140,13 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
                         <tr><td data-label="Field"><code>current_temperature</code></td><td data-label="Type">°C</td><td data-label="Meaning">Room temperature.</td></tr>
                         <tr><td data-label="Field"><code>current_humidity</code></td><td data-label="Type">%</td><td data-label="Meaning">Room humidity.</td></tr>
                         <tr><td data-label="Field"><code>action</code></td><td data-label="Type">string</td><td data-label="Meaning">What the system is doing: <code>off</code>, <code>heating</code>, <code>cooling</code>, <code>fan</code> or <code>idle</code>.</td></tr>
-                        <tr><td data-label="Field"><code>heating</code>, <code>cooling</code>, <code>fan_running</code></td><td data-label="Type">bool</td><td data-label="Meaning">Heating or cooling stage on (any stage, aux or emergency heat included); fan on.</td></tr>
+                        <tr><td data-label="Field"><code>heating</code>, <code>cooling</code>, <code>fan_running</code></td><td data-label="Type">bool</td><td data-label="Meaning"><code>action</code> is <code>heating</code> or <code>cooling</code> (any stage, aux or emergency heat included; so <code>false</code> in <code>off</code>); the fan is on, in any mode.</td></tr>
                         <tr><td data-label="Field"><code>fan_mode</code></td><td data-label="Type">string</td><td data-label="Meaning"><code>on</code> while the fan timer runs, else <code>auto</code>.</td></tr>
                         <tr><td data-label="Field"><code>fan_timer_end</code></td><td data-label="Type">RFC 3339</td><td data-label="Meaning">When the fan timer ends, or <code>null</code>.</td></tr>
                         <tr><td data-label="Field"><code>fan_timer_duration</code></td><td data-label="Type">string</td><td data-label="Meaning">Minutes, as text (<code>"15"</code>). Absent until the unit has one.</td></tr>
                         <tr><td data-label="Field"><code>preset</code></td><td data-label="Type">string</td><td data-label="Meaning"><code>eco</code> or <code>none</code>.</td></tr>
-                        <tr><td data-label="Field"><code>eco_mode</code></td><td data-label="Type">string</td><td data-label="Meaning">The unit's own: <code>schedule</code>, <code>manual-eco</code> (set by hand or a command) or <code>auto-eco</code> (Home/Away Assist).</td></tr>
-                        <tr><td data-label="Field"><code>away_temperature_low</code>, <code>away_temperature_high</code></td><td data-label="Type">°C</td><td data-label="Meaning">Eco temperatures.</td></tr>
+                        <tr><td data-label="Field"><code>eco_mode</code></td><td data-label="Type">string</td><td data-label="Meaning">The unit's own: <code>schedule</code>, <code>manual-eco</code> (set by hand or a command) or <code>auto-eco</code> (Home/Away Assist). <code>&lt;nil&gt;</code> until reported.</td></tr>
+                        <tr><td data-label="Field"><code>away_temperature_low</code>, <code>away_temperature_high</code></td><td data-label="Type">°C</td><td data-label="Meaning">Eco temperatures, always within the commands' ranges (4.5–21 and 24–32 °C): the unit's 40, 70 and 90 °F limits read as the nearest bound.</td></tr>
                         <tr><td data-label="Field"><code>occupancy</code></td><td data-label="Type">bool</td><td data-label="Meaning"><code>false</code> when Home/Away Assist decided nobody is home.</td></tr>
                         <tr><td data-label="Field"><code>time_to_target</code></td><td data-label="Type">RFC 3339</td><td data-label="Meaning">When the unit expects to reach the setpoint, or <code>null</code>.</td></tr>
                         <tr><td data-label="Field"><code>backplate_temperature</code></td><td data-label="Type">°C</td><td data-label="Meaning">The backplate's own sensor, exact.</td></tr>
@@ -156,7 +156,7 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
                         <tr><td data-label="Field"><code>current_version</code></td><td data-label="Type">string</td><td data-label="Meaning">Nest firmware version.</td></tr>
                         <tr><td data-label="Field"><code>temperature_scale</code></td><td data-label="Type">string</td><td data-label="Meaning"><code>C</code> or <code>F</code>: what the unit displays.</td></tr>
                         <tr><td data-label="Field"><code>target_humidity</code></td><td data-label="Type">%</td><td data-label="Meaning">Target humidity.</td></tr>
-                        <tr><td data-label="Field"><code>filter_runtime_sec</code>, <code>filter_runtime_h</code></td><td data-label="Type">s, h</td><td data-label="Meaning">Air filter runtime; <code>filter_runtime_h</code> to 0.1 h, absent without one.</td></tr>
+                        <tr><td data-label="Field"><code>filter_runtime_sec</code>, <code>filter_runtime_h</code></td><td data-label="Type">s, h</td><td data-label="Meaning">Air filter runtime; <code>filter_runtime_h</code> to 0.1 h, absent until the unit reports a runtime.</td></tr>
                         <tr><td data-label="Field"><code>learning_mode</code>, <code>auto_away_enable</code>, <code>sunlight_correction_enabled</code>, <code>preconditioning_enabled</code>, <code>away_temperature_low_enabled</code>, <code>away_temperature_high_enabled</code>, <code>target_humidity_enabled</code></td><td data-label="Type">bool</td><td data-label="Meaning">The settings of the same-named commands.</td></tr>
                         <tr><td data-label="Field"><code>leaf</code></td><td data-label="Type">bool</td><td data-label="Meaning">The Leaf shows.</td></tr>
                         <tr><td data-label="Field"><code>preconditioning_active</code>, <code>sunlight_correction_active</code></td><td data-label="Type">bool</td><td data-label="Meaning">Early-On, Sunblock acting now.</td></tr>
@@ -180,12 +180,12 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
   "daily":  [{"datetime": "2026-10-31T00:00:00+00:00", "temperature": 14, "templow": 6, "humidity": 65}]
 }</code></pre>
             <ul>
-                <li>Every field is optional. Times are ISO 8601 with an offset; temperatures °C.</li>
+                <li>Every field is optional, and each publish replaces the last, so a field left out is cleared. Times are ISO 8601 with an offset; temperatures °C.</li>
                 <li><code>condition</code> is a Home Assistant weather condition: <code>sunny</code>, <code>clear-night</code>, <code>partlycloudy</code>, <code>cloudy</code>, <code>fog</code>, <code>rainy</code>, <code>pouring</code>, <code>lightning</code>, <code>lightning-rainy</code>, <code>snowy</code>, <code>snowy-rainy</code>, <code>hail</code>, <code>windy-variant</code>. Others show the unit's default image.</li>
-                <li><code>next_rising</code> and <code>next_setting</code> choose the day or night image.</li>
+                <li><code>next_rising</code> and <code>next_setting</code> together choose the day or night image; one alone is ignored.</li>
                 <li><code>hourly</code>: up to 48 hours. <code>daily</code>: up to 6 days. A twice-daily list (day and night halves, each with <code>is_daytime</code>) is folded into days, the night's temperature as the low.</li>
             </ul>
-            <p><b>Clock.</b> nestlocal sets the unit's clock from NTP. On a network with no way out to an NTP server, it publishes an empty message on <code>time/request</code> every minute until answered, then every 6 hours. Answer on <code>set/time</code> with the current time in seconds since 1970 (decimals allowed). An answer more than 5 seconds after the request is ignored.</p>
+            <p><b>Clock.</b> nestlocal sets the unit's clock from NTP. Over MQTT it also asks, whether or not NTP works: it publishes an empty message on <code>time/request</code> on each connection and every minute until answered, then every 6 hours. Answer on <code>set/time</code> with the current time in seconds since 1970 (decimals allowed). An answer more than 5 seconds after the request is ignored.</p>
 <pre><code>mosquitto_sub -h broker.lan -t 'nestlocal/+/time/request' -v | while read -r topic _; do
   mosquitto_pub -h broker.lan -t "${topic%/time/request}/set/time" -m "$(date +%s)"
 done</code></pre>
@@ -209,10 +209,10 @@ done</code></pre>
                 </table>
             </div>
             <h3>Reports</h3>
-            <p>The thermostat reports every change, and everything every 10 minutes (the first 10 s after joining), to the coordinator (<code>0x0000</code>), endpoint 1. It does so whatever bindings and reporting configuration exist: Configure Reporting is accepted and changes nothing. Bind and configure reporting anyway if your stack expects it; the converter does.</p>
+            <p>The thermostat reports every change, and everything every 10 minutes (the first 10 s after joining), to the coordinator (<code>0x0000</code>), endpoint 1. OutdoorTemperature and endpoint 5's seconds left trigger no report of their own: they go out with the next one. It does so whatever bindings and reporting configuration exist: Configure Reporting is accepted and changes nothing. Bind and configure reporting anyway if your stack expects it; the converter does.</p>
             <p>Reported attributes: Thermostat <code>0x0000</code>–<code>0x0002</code>, <code>0x0011</code>–<code>0x0014</code>, <code>0x001B</code>, <code>0x001C</code>, <code>0x0025</code>, <code>0x0029</code>; Power Configuration <code>0x0020</code>; <code>0x0000</code> of Fan Control, Thermostat UI Configuration, Relative Humidity and Temperature Measurement; PresentValue (<code>0x0055</code>) of Analog Output, Analog Input, Binary Input and Binary Output.</p>
             <h3>Commands</h3>
-            <p>Read Attributes, Write Attributes (with and without response), Configure Reporting and Discover Attributes are answered. A write is a command (see <a href="#mqtt-commands">MQTT commands</a>, with the same ranges): out of range gives <code>INVALID_VALUE</code>, read-only <code>READ_ONLY</code>. A read of an attribute with no value yet gives ZCL's "none" for its type (<code>0x8000</code> for temperatures, <code>0xFFFF</code> for humidity, <code>0xFF</code> for battery voltage). Manufacturer-specific frames are served for the Weather cluster with Nest Labs' code; any other gets <code>UNSUP_MANUF_*_COMMAND</code>.</p>
+            <p>Read Attributes, Write Attributes (with and without response), Configure Reporting and Discover Attributes are answered. A write is a command (see <a href="#mqtt-commands">MQTT commands</a>, with the same ranges, but 9–32 °C for the occupied setpoints): out of range gives <code>INVALID_VALUE</code>, read-only <code>READ_ONLY</code>, the wrong type <code>INVALID_DATA_TYPE</code>, an attribute the cluster lacks <code>UNSUPPORTED_ATTRIBUTE</code>. A read of an attribute with no value yet gives ZCL's "none" for its type (<code>0x8000</code> for LocalTemperature, OutdoorTemperature and MeasuredValue, <code>0xFFFF</code> for humidity, <code>0xFF</code> for battery voltage). Occupied and unoccupied setpoints read defaults instead (cooling 2400 and 3200, heating 2000 and 900), the fan timer 15 and the target humidity 35. Manufacturer-specific frames are served for the Weather cluster with Nest Labs' code; any other gets <code>UNSUP_MANUF_*_COMMAND</code>.</p>
             <h3>Time</h3>
             <p>Endpoint 1 is a Time cluster (<code>0x000A</code>) client: 10 s after joining, then every 6 hours, the thermostat reads <code>Time</code> (<code>0x0000</code>, UTCTime) from the coordinator's endpoint 1 and sets its clock from it when the two differ by more than 2 s; a read that brings no time is retried every minute. Zigbee2MQTT and ZHA answer it by themselves. An answer is trusted only within 5 s of the request.</p>
 
@@ -239,10 +239,10 @@ done</code></pre>
                         <tr><td data-label="Endpoint">21</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Early-On active</td></tr>
                         <tr><td data-label="Endpoint">22</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Sunblock active</td></tr>
                         <tr><td data-label="Endpoint">23</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Safety shutoff</td></tr>
-                        <tr><td data-label="Endpoint">24</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Filter replacement needed (with an air filter)</td></tr>
-                        <tr><td data-label="Endpoint">25</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Hot water active (with hot water control)</td></tr>
-                        <tr><td data-label="Endpoint">26</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Humidifier running (with a humidifier)</td></tr>
-                        <tr><td data-label="Endpoint">27</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Dehumidifier running (with a dehumidifier)</td></tr>
+                        <tr><td data-label="Endpoint">24</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Filter replacement (with an air filter)</td></tr>
+                        <tr><td data-label="Endpoint">25</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Hot water (with hot water control)</td></tr>
+                        <tr><td data-label="Endpoint">26</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Humidifier (with a humidifier)</td></tr>
+                        <tr><td data-label="Endpoint">27</td><td data-label="Device type">Simple Sensor <code>0x000C</code></td><td data-label="Server clusters">Binary Input</td><td data-label="What">Dehumidifier (with a dehumidifier)</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -268,20 +268,21 @@ done</code></pre>
                     </tbody>
                 </table>
             </div>
-            <p>Commands: <b>SetpointRaiseLower</b> (<code>0x00</code>; mode 0 heat, 1 cool, 2 both; amount int8 in 0.1 °C, clamped to the limits) and <b>ClearWeeklySchedule</b> (<code>0x03</code>; as <code>clear_schedule</code>).</p>
+            <p>Commands: <b>SetpointRaiseLower</b> (<code>0x00</code>; mode 0 heat, 1 cool, 2 both; amount int8 in 0.1 °C, clamped to the limits; in <code>heat</code> or <code>cool</code>, a mode naming only the other side does nothing) and <b>ClearWeeklySchedule</b> (<code>0x03</code>; as <code>clear_schedule</code>).</p>
 
             <h3>Other clusters</h3>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Cluster</th><th>Attribute</th><th>Meaning</th></tr></thead>
                     <tbody>
+                        <tr><td data-label="Cluster">Identify <code>0x0003</code></td><td data-label="Attribute"><code>0x0000</code> IdentifyTime, uint16</td><td data-label="Meaning">Always <code>0</code>. Writes and commands <code>0x00</code>, <code>0x01</code> succeed and do nothing.</td></tr>
                         <tr><td data-label="Cluster">Power Configuration <code>0x0001</code></td><td data-label="Attribute"><code>0x0020</code> BatteryVoltage, uint8</td><td data-label="Meaning">Display battery, in 100 mV</td></tr>
                         <tr><td data-label="Cluster">Fan Control <code>0x0202</code></td><td data-label="Attribute"><code>0x0000</code> FanMode, enum8, read/write</td><td data-label="Meaning"><code>0x04</code> on (fan timer running), <code>0x05</code> auto. Writing <code>0x00</code> also means auto.</td></tr>
                         <tr><td data-label="Cluster">Fan Control <code>0x0202</code></td><td data-label="Attribute"><code>0x0001</code> FanModeSequence</td><td data-label="Meaning"><code>0x04</code>: on/auto</td></tr>
                         <tr><td data-label="Cluster">Thermostat UI Configuration <code>0x0204</code></td><td data-label="Attribute"><code>0x0000</code> TemperatureDisplayMode, enum8, read/write</td><td data-label="Meaning"><code>0</code> °C, <code>1</code> °F</td></tr>
                         <tr><td data-label="Cluster">Thermostat UI Configuration <code>0x0204</code></td><td data-label="Attribute"><code>0x0001</code> KeypadLockout</td><td data-label="Meaning">Always <code>0</code>, read-only</td></tr>
-                        <tr><td data-label="Cluster">Relative Humidity <code>0x0405</code></td><td data-label="Attribute"><code>0x0000</code> MeasuredValue, uint16</td><td data-label="Meaning">Room humidity, 0.01 %</td></tr>
-                        <tr><td data-label="Cluster">Temperature Measurement <code>0x0402</code></td><td data-label="Attribute"><code>0x0000</code> MeasuredValue, int16</td><td data-label="Meaning">Backplate temperature</td></tr>
+                        <tr><td data-label="Cluster">Relative Humidity <code>0x0405</code></td><td data-label="Attribute"><code>0x0000</code> MeasuredValue, uint16</td><td data-label="Meaning">Room humidity, 0.01 %; min/max <code>0</code>/<code>10000</code></td></tr>
+                        <tr><td data-label="Cluster">Temperature Measurement <code>0x0402</code></td><td data-label="Attribute"><code>0x0000</code> MeasuredValue, int16</td><td data-label="Meaning">Backplate temperature; min/max <code>−2000</code>/<code>6000</code></td></tr>
                         <tr><td data-label="Cluster">Analog Output <code>0x000D</code></td><td data-label="Attribute"><code>0x0055</code> PresentValue, single, read/write</td><td data-label="Meaning">Value, rounded on write. Also Description <code>0x001C</code>, Min/MaxPresentValue <code>0x0045</code>/<code>0x0041</code>, EngineeringUnits <code>0x0075</code> (72 minutes, 98 percent).</td></tr>
                         <tr><td data-label="Cluster">Analog Input <code>0x000C</code></td><td data-label="Attribute"><code>0x0055</code> PresentValue, single</td><td data-label="Meaning">Value. EngineeringUnits 73 seconds, 71 hours.</td></tr>
                         <tr><td data-label="Cluster">Binary Input <code>0x000F</code></td><td data-label="Attribute"><code>0x0055</code> PresentValue, bool</td><td data-label="Meaning">The state. Description <code>0x001C</code> is its name, as in the table above.</td></tr>
@@ -291,7 +292,7 @@ done</code></pre>
             </div>
 
             <h3 id="zigbee-weather">Weather cluster (<code>0xFC00</code>, manufacturer-specific), endpoint 1</h3>
-            <p>What the thermostat used to get from Google: MQTT's <code>set/outdoor_temperature</code>, <code>set/outdoor_humidity</code> and <code>set/weather</code> as attributes, all read/write, written by the coordinator with manufacturer code <code>0x10D6</code> in the frame and kept until written again. Each kind of value has one "none": <code>0x8000</code> for an int16, <code>0xFF</code> for a uint8, <code>0xFFFFFFFF</code> for a UTCTime (seconds since 2000-01-01 UTC). The forecast is in slots, hour <i>hh</i> (0–23) at <code>0x1hhf</code> and day <i>dd</i> (0–5) at <code>0x2ddf</code>, <i>f</i> the field; a slot whose time is none is left out of the forecast, so write every slot. A frame holds about 12 attributes (4 hours, or 3 days); Zigbee2MQTT's converter does the splitting, from the <a href="/integrations/#zigbee">weather blueprint for Zigbee</a>.</p>
+            <p>What the thermostat used to get from Google: MQTT's <code>set/outdoor_temperature</code>, <code>set/outdoor_humidity</code> and <code>set/weather</code> as attributes, all read/write, written by the coordinator with manufacturer code <code>0x10D6</code> in the frame and kept in memory until written again. Each kind of value has one "none": <code>0x8000</code> for an int16, <code>0xFF</code> for a uint8, <code>0xFFFFFFFF</code> for a UTCTime (seconds since 2000-01-01 UTC), the empty string for the condition. Any int16 outside −60 to 60 °C, or uint8 above 100, gets <code>INVALID_VALUE</code>. The forecast is in slots, hour <i>hh</i> (0–23, in hex: hour 23's time is <code>0x1170</code>) at <code>0x1hhf</code> and day <i>dd</i> (0–5) at <code>0x2ddf</code>, <i>f</i> the field; a slot whose time is none is left out of the forecast, so write every slot. A frame holds about 12 attributes (4 hours, or 3 days); Zigbee2MQTT's converter does the splitting, from the <a href="/integrations/#zigbee">weather blueprint for Zigbee</a>.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Attribute</th><th>Type</th><th>Meaning</th></tr></thead>
@@ -309,13 +310,14 @@ done</code></pre>
             </div>
 
             <h2 id="matter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Matter</h2>
-            <p>A Matter node on UDP port 5540, over Wi-Fi and, with Thread support, Thread. Any Matter controller commissions it with the pairing code from <a href="/integrations/#matter">Integrations</a>; the discriminator is 3840.</p>
+            <p>A Matter node on UDP port 5540, over Wi-Fi and, with Thread support, Thread. Any Matter controller commissions it over IP or, on a 3rd generation with the supported Bluetooth firmware, Bluetooth, with the pairing code from <a href="/integrations/#matter">Integrations</a>; the discriminator is 512 with the default code, and a custom code sets its top 4 bits, the rest zero.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Basic Information</th><th>Value</th></tr></thead>
                     <tbody>
                         <tr><td data-label="Basic Information">VendorID, ProductID</td><td data-label="Value"><code>0xFFF1</code>, <code>0x8001</code> (Matter test IDs, test attestation: controllers must accept uncertified devices)</td></tr>
                         <tr><td data-label="Basic Information">VendorName, ProductName</td><td data-label="Value"><code>Google Nest</code>, <code>Nest Learning Thermostat</code></td></tr>
+                        <tr><td data-label="Basic Information">HardwareVersion, SoftwareVersion</td><td data-label="Value"><code>3</code>, <code>1</code> on every unit: Matter doesn't tell the generations apart</td></tr>
                         <tr><td data-label="Basic Information">SerialNumber</td><td data-label="Value">The unit's serial</td></tr>
                         <tr><td data-label="Basic Information">SoftwareVersionString</td><td data-label="Value">Nest firmware version</td></tr>
                     </tbody>
@@ -328,22 +330,22 @@ done</code></pre>
                         <tr><td data-label="Endpoint">1</td><td data-label="Device type">Thermostat</td><td data-label="Clusters">Identify, Thermostat, Relative Humidity Measurement, Thermostat User Interface Configuration</td><td data-label="What">The thermostat; °C/°F</td></tr>
                         <tr><td data-label="Endpoint">2</td><td data-label="Device type">Temperature Sensor</td><td data-label="Clusters">Identify, Temperature Measurement, Fixed Label</td><td data-label="What">Backplate temperature</td></tr>
                         <tr><td data-label="Endpoint">3</td><td data-label="Device type">Power Source</td><td data-label="Clusters">Power Source (battery), Fixed Label</td><td data-label="What">Battery: BatVoltage in mV, BatChargeLevel</td></tr>
-                        <tr><td data-label="Endpoint">4</td><td data-label="Device type">Fan</td><td data-label="Clusters">Identify, Fan Control, Fixed Label</td><td data-label="What">FanModeSequence Off/High: High (or On) runs the fan timer, Off stops it (with a fan)</td></tr>
-                        <tr><td data-label="Endpoint">5</td><td data-label="Device type">Mode Select</td><td data-label="Clusters">Mode Select, Fixed Label</td><td data-label="What">Fan timer duration: modes 0–7 are 15, 30, 45, 60, 120, 240, 480, 720 min (with a fan)</td></tr>
-                        <tr><td data-label="Endpoint">10…</td><td data-label="Device type">On/Off Plug-in Unit</td><td data-label="Clusters">Identify, On/Off, Fixed Label</td><td data-label="What">The switches</td></tr>
+                        <tr><td data-label="Endpoint">4</td><td data-label="Device type">Fan</td><td data-label="Clusters">Identify, Fan Control, Fixed Label</td><td data-label="What">FanModeSequence Off/High: FanMode High (or On) runs the fan timer, Off stops it, others are refused. PercentSetting above 0 acts as High; 0 or null as Off. PercentCurrent is 100 while the fan runs, else 0 (with a fan)</td></tr>
+                        <tr><td data-label="Endpoint">5</td><td data-label="Device type">Mode Select</td><td data-label="Clusters">Mode Select, Fixed Label</td><td data-label="What">Fan timer duration: modes 0–7 are 15, 30, 45, 60, 120, 240, 480, 720 min; CurrentMode is the nearest to the unit's duration (with a fan)</td></tr>
+                        <tr><td data-label="Endpoint">10…</td><td data-label="Device type">On/Off Plug-in Unit</td><td data-label="Clusters">Identify, On/Off, Fixed Label</td><td data-label="What">The switches: On, Off, Toggle</td></tr>
                     </tbody>
                 </table>
             </div>
-            <p>Switches are numbered from 10 in this order, skipping those the equipment lacks: Auto-Schedule, Home/Away Assist, Sunblock, Early-On, Eco heat limit (can heat), Eco cool limit (can cool), Humidity control (with a humidifier or dehumidifier). The numbers therefore differ between units: identify each by its Fixed Label, <code>ha_entitylabel</code>, whose value is the name above.</p>
+            <p>Switches are numbered from 10 in this order, skipping those the equipment lacks: Auto-Schedule, Home/Away Assist, Sunblock, Early-On, Eco heat limit (can heat), Eco cool limit (can cool), Humidity control (with a humidifier or dehumidifier). The numbers therefore differ between units: identify each by its Fixed Label, <code>ha_entitylabel</code>, whose value is the name above. Endpoints 2–5 are labelled <code>Backplate temperature</code>, <code>Battery</code>, <code>Fan</code> and <code>Fan timer duration</code>. The equipment is read once, at start, as on Zigbee.</p>
             <h3>Thermostat cluster</h3>
             <ul>
                 <li>Features: Heating, Cooling, AutoMode, Occupancy, Presets. What the unit can do is in ControlSequenceOfOperation (read-only): heating only, cooling only, or cooling and heating.</li>
                 <li>SystemMode: Off, Heat, Cool, Auto (<code>heat_cool</code>). A mode the equipment can't do is refused with a constraint error.</li>
-                <li>Occupied setpoints: the range in Auto; otherwise either one sets the single target. Limits 9–32 °C, dead band 1.5 °C.</li>
-                <li>Unoccupied setpoints are the eco temperatures: heating 9–21 °C, cooling 24–32 °C.</li>
-                <li>Occupancy, OutdoorTemperature (from MQTT), ThermostatRunningState (heat, cool, fan).</li>
+                <li>Occupied setpoints: the range in Auto; otherwise either one sets the single target. Limits 9–32 °C, dead band 1.5 °C. In Auto, a write closer than the dead band to the other setpoint is refused with a constraint error.</li>
+                <li>Unoccupied setpoints are the eco temperatures. Writes: heating 9–21 °C, cooling 24–32 °C. Matter refuses the 4.5–9 °C that MQTT and Zigbee accept, but reads it, there and in the preset, when set that way.</li>
+                <li>Occupancy, OutdoorTemperature (from MQTT or Zigbee's Weather cluster; subscribers get it with the next other change), ThermostatRunningState (heat, cool, fan).</li>
                 <li>Presets: one, handle <code>eco</code> (the eco temperatures). SetActivePresetRequest with <code>eco</code> turns eco on, with null back to the schedule. ActivePresetHandle is <code>eco</code> or null.</li>
-                <li>Commands: SetpointRaiseLower and SetActivePresetRequest. No weekly schedule.</li>
+                <li>Commands: SetpointRaiseLower and SetActivePresetRequest. No weekly schedule. SetpointRaiseLower stops at the limits and the dead band; outside Auto it moves the target whichever side it names.</li>
             </ul>
             <p>Not on Matter: the indicators (Leaf, Early-On and Sunblock active, safety shutoff, filter, hot water, humidifier and dehumidifier running), the target humidity, time to temperature, filter runtime and clearing the schedule. Use MQTT or Zigbee for those.</p>
         </div>
