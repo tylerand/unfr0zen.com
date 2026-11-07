@@ -47,6 +47,7 @@
                 <li><a href="#matter">Matter</a></li>
                 <li><a href="#thread">Matter over Thread</a></li>
                 <li><a href="#zigbee">Zigbee</a></li>
+                <li><a href="#external-temperature">External temperature (turns off Bluetooth)</a></li>
                 <li><a href="#doom">Doom</a></li>
                 <li><a href="#options">Other options</a></li>
                 <li><a href="#backup">Backup &amp; restore</a></li>
@@ -128,6 +129,38 @@
             <p>A router needs its own trust-centre link key to help other devices join a coordinator that uses per-device keys. If it still has only the global joining key, enable pairing again on that thermostat to obtain its individual key.</p>
             <p>To move to another network, open <b>UNFR0ZEN → Zigbee → Enable pairing</b> and confirm. The thermostat beeps, leaves the network, forgets its credentials and looks for one permitting joins for 30 seconds. After a timeout it stays off any network until pairing is enabled again or nestlocal restarts.</p>
             <p>The radio keeps routing while the thermostat sleeps, and its interrupt wakes the unit for a message. The radio-wake module supports the 2nd generation's kernel and the kernels of the published 3rd-generation releases (5.8 to 6.1). Without a matching module, messages wait until the unit wakes for something else. The 2nd generation's native client prevents sleep while a USB cable is connected.</p>
+
+            <h2 id="external-temperature"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>External temperature (turns off Bluetooth)</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>App</th><th>CLI</th></tr></thead>
+                    <tbody>
+                        <tr><td data-label="App"><b>External temperature (turns off Bluetooth)</b>, under Patch → Advanced</td><td data-label="CLI"><code>--external-temperature</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>Lets a thermometer you already have regulate the heating, in place of the thermostat's own sensor. 3rd generation only, with MQTT, Matter or Zigbee on. nestlocal plays a Nest Temperature Sensor that the thermostat hears over its Bluetooth link, so the thermostat's own logic does the rest: send it readings and it regulates from them; stop, and it goes back to its own sensor.</p>
+            <ul>
+                <li><b>One sensor.</b> Only one external temperature is supported for now.</li>
+                <li><b>Named after the thermostat's room.</b> The sensor takes the thermostat's room, so the Sensors menu lists it under that room's name, Living room for example. It cannot be renamed on its own yet.</li>
+                <li><b>Bluetooth is turned off.</b> The thermostat no longer hears real Nest Temperature Sensors, and the Nest app cannot pair with it over Bluetooth.</li>
+            </ul>
+            <h3>Setting it up in Home Assistant</h3>
+            <p>Install with the option and with the integration you use, then import that integration's blueprint and create an automation from it. Each blueprint sends your thermometer's reading whenever it changes, every 10 minutes, and when Home Assistant starts. Temperatures in °F are converted to °C, and nothing is sent while the thermometer is unavailable.</p>
+            <p><b>MQTT.</b> Import <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/home-assistant/external-temperature-mqtt.yaml" target="_blank" rel="noopener"><code>external-temperature-mqtt.yaml</code></a>, create an automation from it, and pick the thermostat (its MQTT device) and your room temperature sensor. It publishes each reading to <code>nestlocal/&lt;serial&gt;/set/external_temperature</code>.</p>
+            <p class="badge"><a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Funfr0zen%2Funfr0zen%2Fblob%2Fmain%2Fintegrations%2Fhome-assistant%2Fexternal-temperature-mqtt.yaml" target="_blank" rel="noopener"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Import the external temperature blueprint for MQTT"></a></p>
+            <p><b>Zigbee2MQTT.</b> Use the converter from <a href="#zigbee">Zigbee</a>. After updating it, re-interview the thermostat, then Reconfigure it, so Home Assistant gets <b>Temperature source</b>. Import <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/home-assistant/external-temperature-zigbee.yaml" target="_blank" rel="noopener"><code>external-temperature-zigbee.yaml</code></a>, create an automation from it, and pick the thermostat, the Zigbee2MQTT base topic (default <code>zigbee2mqtt</code>) and your room temperature sensor. It publishes <code>{"external_temperature": 21.5}</code> to <code>&lt;base topic&gt;/&lt;IEEE address&gt;/set</code>. There is no blueprint for ZHA: the reading is attribute <code>0x0005</code> of the manufacturer-specific cluster <code>0xFC00</code> (see <a href="/protocols/#zigbee-weather">Protocols</a>).</p>
+            <p class="badge"><a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Funfr0zen%2Funfr0zen%2Fblob%2Fmain%2Fintegrations%2Fhome-assistant%2Fexternal-temperature-zigbee.yaml" target="_blank" rel="noopener"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Import the external temperature blueprint for Zigbee2MQTT"></a></p>
+            <p><b>Matter.</b> The thermostat's Matter device gets an <b>External temperature</b> select offering 5 to 35 °C in half degrees. Import <a href="https://github.com/unfr0zen/unfr0zen/blob/main/integrations/home-assistant/external-temperature-matter.yaml" target="_blank" rel="noopener"><code>external-temperature-matter.yaml</code></a>, create an automation from it, and pick that select and your room temperature sensor. Readings are rounded to the nearest half degree. Choosing the same temperature again counts as a new reading.</p>
+            <p class="badge"><a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Funfr0zen%2Funfr0zen%2Fblob%2Fmain%2Fintegrations%2Fhome-assistant%2Fexternal-temperature-matter.yaml" target="_blank" rel="noopener"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Import the external temperature blueprint for Matter"></a></p>
+            <h3>How it behaves</h3>
+            <ul>
+                <li>The sensor appears in the thermostat's Sensors menu as soon as the thermostat starts: nestlocal introduces it once, with the temperature the thermostat shows. The thermostat keeps regulating from its own sensor until the first reading arrives, which switches it to the external temperature.</li>
+                <li>A reading counts for 30 minutes, and nestlocal repeats it to the thermostat every minute until then. About 11.5 minutes after it stops counting, the thermostat goes back to its own sensor. The next reading switches it back.</li>
+                <li>Choosing the backplate in the Sensors menu lasts until the thermostat restarts. After a restart, the next reading switches it back to the external temperature.</li>
+                <li>Home Assistant shows <b>External temperature</b>, the reading while it counts, and <b>Temperature source</b>, <code>external</code> or <code>backplate</code>. Zigbee2MQTT shows Temperature source only. On Matter both are selects: Temperature source shows the source, and choosing the other one is refused.</li>
+                <li>Installing again without the option removes the sensor from the thermostat, its Sensors menu entry included, and puts its Bluetooth setting back.</li>
+            </ul>
 
             <h2 id="doom"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg>Doom</h2>
             <div class="table-scroll">
