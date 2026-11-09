@@ -45,7 +45,7 @@
                     <h1>unfr<span class="zero">0</span>zen</h1>
                 </div>
                 <h2>Free your Nest Learning Thermostat from Google's cloud</h2>
-                <p>Local MQTT, Matter and Zigbee for Home Assistant. Installed over USB, no Google account, keeps working when the internet is down.</p>
+                <p>Local MQTT, Matter and Zigbee for Home Assistant, installed over USB. Replaces the thermostat's Nest cloud connection; works without internet.</p>
                 <div class="buttons">
                     <a href="/download/" class="btn btn-ice">↓ Download</a>
                     <a href="https://github.com/unfr0zen" class="btn btn-dark" target="_blank" rel="noopener">View on GitHub ↗</a>
@@ -71,31 +71,31 @@
             <div class="grid">
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07"/></svg>No cloud</h3>
-                    <p>No Google account, no internet needed. The thermostat talks to your own network only, and the Wi-Fi it joins doesn't need internet access.</p>
+                    <p>MQTT, Matter or Zigbee replaces the thermostat's Nest cloud connection with nestlocal, a service on the unit. The Nest and Google Home apps no longer control it. No Google account, no internet.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>MQTT</h3>
-                    <p>The thermostat communicates directly with your MQTT broker and Home Assistant discovers it there. No Nest cloud or other bridge is involved. Control modes, setpoints, eco, humidity, fan, schedule and more.</p>
+                    <p>The thermostat connects to your MQTT broker; Home Assistant discovers it there. Modes, setpoints, eco, humidity, fan, schedule and more.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Matter</h3>
-                    <p>Serves the unit as a Matter thermostat over Wi-Fi, commissioned with a pairing code or over Bluetooth on supported units. Thread support is experimental.</p>
+                    <p>A Matter thermostat over Wi-Fi, paired with a code or, on supported 3rd generation units, over Bluetooth. Thread is experimental.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>Zigbee</h3>
-                    <p>Joins your Zigbee network as a router through the thermostat's own 802.15.4 radio, and still sleeps between messages.</p>
+                    <p>A Zigbee router on the thermostat's own 802.15.4 radio. Sleeps between messages.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>On-device settings</h3>
-                    <p>An UNFR0ZEN menu on the thermostat itself shows Matter pairing codes and QR, and handles Zigbee pairing. The original firmware is kept for undo.</p>
+                    <p>An UNFR0ZEN menu on the thermostat: Matter pairing code and QR, Zigbee pairing. The original nlclient is kept for undo.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>One app, every OS</h3>
-                    <p>A single self-contained executable for Windows, macOS and Linux. Recovery firmware is embedded; connect the thermostat with a USB data cable.</p>
+                    <p>One self-contained executable for Windows, macOS and Linux, recovery firmware included. Connect the thermostat with a USB data cable.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="22" x2="2" y1="12" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/></svg>Backup &amp; restore</h3>
-                    <p>The app and the CLI back up and restore the thermostat's whole NAND as an image before you touch anything.</p>
+                    <p>Back up and restore the whole NAND as an image, from the app or the CLI.</p>
                 </div>
                 <div class="card">
                     <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>External temperature</h3>
@@ -125,8 +125,8 @@
                 </table>
             </div>
             <p>✅ tested on a unit · 🧪 built, not yet tested on a unit · — not available</p>
-            <p>MQTT, Matter and Zigbee are nestlocal's: choosing any of them installs it on the thermostat. With MQTT or Matter, the thermostat reaches the broker or the controller over Wi-Fi, joined from its own menu (Settings → Network); the network doesn't need internet access.</p>
-            <p><b>External temperature</b> means the thermostat regulates from a temperature you send it over MQTT, Matter or Zigbee, any thermometer in Home Assistant for example. Official Nest Temperature Sensors are not supported: on the 3rd generation the option turns Bluetooth off, and the 2nd generation never had them. See <a href="/integrations/#external-temperature">Integrations</a>.</p>
+            <p>MQTT, Matter and Zigbee install nestlocal on the thermostat, which takes the place of Nest's cloud: the Nest and Google Home apps no longer control the unit. MQTT and Matter use Wi-Fi, joined from Settings → Network; the network doesn't need internet access.</p>
+            <p><b>External temperature</b>: the thermostat regulates from a reading sent over MQTT, Matter or Zigbee, any thermometer in Home Assistant for example. Nest Temperature Sensors are not supported: the option turns the 3rd generation's Bluetooth off, and the 2nd generation never had them. See <a href="/integrations/#external-temperature">Integrations</a>.</p>
             <h3>Tested firmware</h3>
             <div class="table-scroll">
                 <table>
@@ -139,7 +139,7 @@
                     </tbody>
                 </table>
             </div>
-            <p>Other versions aren't blocked: unfr0zen patches them on their structure and keeps the stock nlclient beside the run log. Running a version not listed here? <a href="https://github.com/unfr0zen/unfr0zen/issues" target="_blank" rel="noopener">Open an issue</a> with the run log.</p>
+            <p>Other versions aren't blocked: unfr0zen patches on structure and keeps the stock nlclient beside the run log. Running one? <a href="https://github.com/unfr0zen/unfr0zen/issues" target="_blank" rel="noopener">Open an issue</a> with the run log.</p>
         </div>
     </section>
 </main>
