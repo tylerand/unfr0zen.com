@@ -418,6 +418,9 @@ tr:last-child td { border-bottom: none; }
 
 .table-scroll { overflow-x: auto; }
 
+/* Supported thermostats: the columns after the codename centred. */
+.devices th:nth-child(n+3), .devices td:nth-child(n+3) { text-align: center; }
+
 /* Download page */
 
 .os-picker {
