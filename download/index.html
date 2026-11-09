@@ -77,6 +77,7 @@
                 <li>It isn't signed, so SmartScreen may warn you: More info, then Run anyway.</li>
             </ol>
             <div class="note">1st and 2nd gen thermostats: the boot ROM (<code>0451:d00e</code>) needs the WinUSB driver, bound once with <a href="https://zadig.akeo.ie" target="_blank" rel="noopener">Zadig</a>.</div>
+            <div class="note">3rd gen: if a run stops with <code>ACM interface for 18d1:4ee0 did not appear</code>, an Android driver installed earlier has claimed the recovery device. While the thermostat is in recovery, open Device Manager, find <b>Android Bootloader Interface</b>, choose Update driver → Browse my computer → Let me pick → Universal Serial Bus devices → <b>USB Composite Device</b>. The choice persists; run again.</div>
         </div>
     </section>
 
@@ -85,7 +86,7 @@
             <h2>Linux (glibc 2.28+)</h2>
             <div class="files" data-files="linux-x86_64 linux-arm64 linux-riscv64"></div>
             <pre><code>tar xf unfr0zen-linux-*.tar.gz && ./unfr0zen</code></pre>
-            <p>Run with arguments, the same executable is the command-line tool, for a terminal, SSH or a headless machine: <code>./unfr0zen --help</code>.</p>
+            <p>With arguments, the same executable is the command-line tool, for a terminal, SSH or a headless machine: <code>./unfr0zen --help</code>.</p>
             <h2>USB access (once)</h2>
             <p>Without this udev rule only root can open the thermostat. Reconnect the unit afterwards if it's already plugged in.</p>
             <pre><code>sudo tee /etc/udev/rules.d/70-unfr0zen.rules > /dev/null &lt;&lt;'EOF'
@@ -120,7 +121,7 @@ sudo udevadm control --reload-rules && sudo udevadm trigger</code></pre>
             <h2>Install</h2>
             <div class="note">Optional: a NAND backup lets you restore the thermostat as it was, should you want that one day. Choose <b>Back up NAND</b> from the menu beside Start, or run <code>unfr0zen backup</code>; the USB steps are the same as below. See <a href="/integrations/#backup">Backup &amp; restore</a>.</div>
             <ol>
-                <li>Open unfr0zen and tick what you want: Relay to MQTT broker (<code>host</code> or <code>host:port</code>, with user, password and TLS if it needs them), Matter, Zigbee, or several. Optionally block Nest's and Google's servers, set an NTP server, and turn on SSH with a root password (<code>unfr0zen</code> by default).</li>
+                <li>Open unfr0zen and tick Relay to MQTT broker (<code>host</code> or <code>host:port</code>, with user, password and TLS as needed), Matter, Zigbee, or several. Any of them replaces the thermostat's Nest cloud connection: the Nest and Google Home apps no longer control it. Optionally block Nest's and Google's servers, set an NTP server, and turn on SSH (root password <code>unfr0zen</code> by default).</li>
                 <li>Click Start.</li>
                 <li>Take the display off its base and connect its USB port to the computer. The generation is detected automatically.</li>
                 <li>When the app asks, hold the front button for 10 seconds.</li>
