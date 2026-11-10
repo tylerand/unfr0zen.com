@@ -138,7 +138,7 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
             <div class="note"><code>raw/</code> writes go to the unit unchecked, with Nest's own field names: read the matching <code>raw/&lt;bucket&gt;</code> topic first. Only the unit's own buckets (<code>&lt;bucket&gt;.&lt;serial&gt;</code>) already reported can be written; <code>structure</code> is keyed by its own id, so <code>set/raw/structure</code> is refused.</div>
 
             <h2 id="mqtt-state"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>MQTT state</h2>
-            <p>The <code>state</code> topic's JSON. A number or string the unit hasn't reported is <code>null</code>, and a bool <code>false</code> (<code>occupancy</code> <code>true</code>). <code>mode</code> and <code>action</code> read <code>off</code>, <code>fan_mode</code> <code>auto</code>, <code>preset</code> <code>none</code>.</p>
+            <p>The <code>state</code> topic's JSON. A number or string the unit hasn't reported is <code>null</code>, and a bool <code>false</code>. <code>mode</code> and <code>action</code> read <code>off</code>, <code>fan_mode</code> <code>auto</code>, <code>preset</code> <code>none</code>.</p>
             <div class="table-scroll">
                 <table>
                     <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
@@ -159,7 +159,7 @@ mosquitto_pub -h broker.lan -t 'nestlocal/&lt;serial&gt;/set/target' -m 21.5</co
                         <tr><td data-label="Field"><code>preset</code></td><td data-label="Type">string</td><td data-label="Meaning"><code>eco</code> or <code>none</code>.</td></tr>
                         <tr><td data-label="Field"><code>eco_mode</code></td><td data-label="Type">string</td><td data-label="Meaning">The unit's own: <code>schedule</code>, <code>manual-eco</code> (set by hand or a command) or <code>auto-eco</code> (Home/Away Assist). <code>&lt;nil&gt;</code> until reported.</td></tr>
                         <tr><td data-label="Field"><code>away_temperature_low</code>, <code>away_temperature_high</code></td><td data-label="Type">°C</td><td data-label="Meaning">Eco temperatures, always within the commands' ranges (4.5–21 and 24–32 °C): the unit's 40, 70 and 90 °F limits read as the nearest bound.</td></tr>
-                        <tr><td data-label="Field"><code>occupancy</code></td><td data-label="Type">bool</td><td data-label="Meaning"><code>false</code> when Home/Away Assist decided nobody is home.</td></tr>
+                        <tr><td data-label="Field"><code>occupancy</code></td><td data-label="Type">bool</td><td data-label="Meaning"><code>true</code> for 15 minutes after the unit's motion sensor last saw someone (its <code>RealTimeOccupancy</code> events, read from nlclient's event log as they happen).</td></tr>
                         <tr><td data-label="Field"><code>time_to_target</code></td><td data-label="Type">RFC 3339</td><td data-label="Meaning">When the unit expects to reach the setpoint, or <code>null</code>.</td></tr>
                         <tr><td data-label="Field"><code>backplate_temperature</code></td><td data-label="Type">°C</td><td data-label="Meaning">The backplate's own sensor, exact.</td></tr>
                         <tr><td data-label="Field"><code>battery_level</code></td><td data-label="Type">V</td><td data-label="Meaning">The display's battery voltage.</td></tr>
@@ -288,7 +288,7 @@ done</code></pre>
                     <tbody>
                         <tr><td data-label="Attribute"><code>0x0000</code> LocalTemperature</td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">Room temperature</td></tr>
                         <tr><td data-label="Attribute"><code>0x0001</code> OutdoorTemperature</td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">The last <code>set/outdoor_temperature</code> over MQTT, or the Weather cluster's</td></tr>
-                        <tr><td data-label="Attribute"><code>0x0002</code> Occupancy</td><td data-label="Type">map8</td><td data-label="Access">read</td><td data-label="Meaning">Bit 0 clear when Home/Away Assist says away</td></tr>
+                        <tr><td data-label="Attribute"><code>0x0002</code> Occupancy</td><td data-label="Type">map8</td><td data-label="Access">read</td><td data-label="Meaning">Bit 0 set for 15 minutes after the motion sensor last saw someone, as MQTT's <code>occupancy</code></td></tr>
                         <tr><td data-label="Attribute"><code>0x0003</code>–<code>0x0006</code>, <code>0x0015</code>–<code>0x0018</code></td><td data-label="Type">int16</td><td data-label="Access">read</td><td data-label="Meaning">Setpoint limits: 900 (9 °C) and 3200 (32 °C)</td></tr>
                         <tr><td data-label="Attribute"><code>0x0011</code> OccupiedCoolingSetpoint</td><td data-label="Type">int16</td><td data-label="Access">read, write</td><td data-label="Meaning"><code>target_high</code> in auto, else <code>target</code></td></tr>
                         <tr><td data-label="Attribute"><code>0x0012</code> OccupiedHeatingSetpoint</td><td data-label="Type">int16</td><td data-label="Access">read, write</td><td data-label="Meaning"><code>target_low</code> in auto, else <code>target</code></td></tr>
@@ -382,7 +382,7 @@ done</code></pre>
                 <li>SystemMode: Off, Heat, Cool, Auto (<code>heat_cool</code>). A mode the equipment can't do is refused with a constraint error.</li>
                 <li>Occupied setpoints: the range in Auto; otherwise either one sets the single target. Limits 9–32 °C, dead band 1.5 °C. In Auto, a write closer than the dead band to the other setpoint is refused with a constraint error.</li>
                 <li>Unoccupied setpoints are the eco temperatures. Writes: heating 9–21 °C, cooling 24–32 °C. Matter refuses the 4.5–9 °C that MQTT and Zigbee accept, but reads it, there and in the preset, when set that way.</li>
-                <li>Occupancy, OutdoorTemperature (from MQTT or Zigbee's Weather cluster; subscribers get it with the next other change), ThermostatRunningState (heat, cool, fan, heat stage 2, cool stage 2).</li>
+                <li>Occupancy (as MQTT's <code>occupancy</code>), OutdoorTemperature (from MQTT or Zigbee's Weather cluster; subscribers get it with the next other change), ThermostatRunningState (heat, cool, fan, heat stage 2, cool stage 2).</li>
                 <li>Presets: one, handle <code>eco</code> (the eco temperatures). SetActivePresetRequest with <code>eco</code> turns eco on, with null back to the schedule. ActivePresetHandle is <code>eco</code> or null.</li>
                 <li>Commands: SetpointRaiseLower and SetActivePresetRequest. No weekly schedule. SetpointRaiseLower stops at the limits and the dead band; outside Auto it moves the target whichever side it names.</li>
             </ul>
